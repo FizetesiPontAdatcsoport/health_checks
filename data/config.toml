@@ -1,0 +1,43 @@
+[HTUSZ_BI]
+linked_server = "OFSZTMRSQL01"
+source_type = "sqlserver"
+
+[HTUSZ_BI.T_ITransaction]
+date_col = "EntryTimestamp"
+sum_col = "Amount"
+source_table = "HTUSZ.dbo.T_ITransaction"
+destination_table = "HTUSZ_BI.dbo.T_ITransaction"
+num_days = 1
+
+[HTUSZ_BI.T_FinishedTransaction]
+date_col = "DateOfCompletion"
+sum_col = "AmountOfOriginal_Tr"
+source_table = "HTUSZ.dbo.T_FinishedTransaction"
+destination_table = "HTUSZ_BI.dbo.T_FinishedTransaction"
+
+[OTMR_BI]
+linked_server = "OFSZTMRSQL01"
+source_type = "sqlserver"
+
+[OTMR_BI.T_PosUsage]
+date_col = "Date"
+sum_col = "SumAmount"
+source_table = "OTMR.dbo.T_PosUsage"
+destination_table = "OTMR_BI.dbo.T_PosUsage"
+
+[OTMR_BI.T_PosTransLog]
+date_col = "StartTS"
+sum_col = "Amount"
+source_table = "OTMR.dbo.T_PosTransLog"
+destination_table = "OTMR_BI.dbo.T_PosTransLog"
+num_days = 10
+
+[IM_BI]
+linked_server = "GEI"
+source_type = "unknown"
+
+[IM_BI.TRZ]
+date_col = "TRKING_TELJESITES_DATUM"
+sum_col = "TRKING_EREDETI_OSSZEG"
+source_table = "RNTOFSZGEI.TRKING"
+destination_table = "IM_BI.dbo.TRZ"

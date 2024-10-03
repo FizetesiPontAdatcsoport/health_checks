@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # Configure file handler for warnings
 file_handler = logging.FileHandler("warnings.log")
-file_handler.setLevel(logging.WARNING)
+file_handler.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 
 # Configure stream handler for debug and above

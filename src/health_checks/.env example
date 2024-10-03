@@ -1,0 +1,4 @@
+SMTP_SERVER="smtp-mail.outlook.com"
+SMTP_PORT=587
+SMTP_USER="your.email"
+SMTP_PASSWORD="your password"

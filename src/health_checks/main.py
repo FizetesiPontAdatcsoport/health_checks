@@ -399,7 +399,7 @@ def send_email(
 
 
 async def main() -> None:
-    config = load_config(Path("data/config.toml"))
+    config = load_config(Path(os.getcwd()) / "data/config.toml")
     server, database = "OFSZDWH01", "WORK"
     dsn = f"""
         DRIVER=ODBC Driver 17 for SQL Server;
@@ -443,4 +443,7 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        logger.error(str(e), exc_info=True)

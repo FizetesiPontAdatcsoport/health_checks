@@ -92,6 +92,7 @@ class DatabaseConfig(NamedTuple):
     linked_server: str
     source_type: str
     tables: dict[str, TableConfig]
+    expected_finish_time: str
 
 
 class MonitoringResult(NamedTuple):
@@ -311,12 +312,47 @@ async def merge_results(pool: aioodbc.Pool) -> None:
             await conn.commit()
 
 
+async def check_previous_health(
+    pool: aioodbc.Pool, db_name: str, table_name: str
+) -> bool:
+    query = """
+    SELECT TOP 1 1
+    FROM [dbo].[T_HealthCheckResult]
+    WHERE [Database] = ? 
+    AND [Table] = ?
+    AND RunDate = CAST(GETDATE() AS DATE) 
+    AND IsHealthy = 1
+    """
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(query, (db_name, table_name))
+            result = await cur.fetchone()
+            return bool(result)
+
+
 async def perform_health_check(
     pool: aioodbc.Pool, config: dict[str, DatabaseConfig]
 ) -> list[ResultTableRow]:
+    current_time = datetime.now().time()
     tasks = []
     for db_name, db_config in config.items():
         for table_name, table_config in db_config.tables.items():
+            expected_finish_time = datetime.strptime(
+                db_config.expected_finish_time, "%H:%M"
+            ).time()
+
+            if current_time < expected_finish_time:
+                logger.info(
+                    f"Skipping health check for {db_name} as it's before the expected finish time."
+                )
+                continue
+
+            if await check_previous_health(pool, db_name, table_name):
+                logger.info(
+                    f"Skipping health check for {db_name}.{table_name} as a successful check already exists for today."
+                )
+                continue
+
             tasks.append(
                 perform_single_health_check(
                     pool, db_name, db_config, table_name, table_config
@@ -334,6 +370,7 @@ def load_config(file_path: Path) -> dict[str, DatabaseConfig]:
             db_name: DatabaseConfig(
                 linked_server=db_config.pop("linked_server"),
                 source_type=db_config.pop("source_type"),
+                expected_finish_time=db_config.pop("expected_finish_time"),
                 tables={
                     table_name: TableConfig(**table_config)
                     for table_name, table_config in db_config.items()

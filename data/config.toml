@@ -1,15 +1,18 @@
 [CMS_BI]
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
+expected_finish_time = "11:30"
 
 [CMS_BI.T_KivonatTrx]
 date_col = "TrxDateTime"
 sum_col = "AmountOriginal"
 source_table = "HTUSZ.dbo.T_KivonatTrx"
 destination_table = "CMS_BI.dbo.T_KivonatTrx"
+
 [HTUSZ_BI]
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
+expected_finish_time = "8:30"
 
 [HTUSZ_BI.T_ITransaction]
 date_col = "EntryTimestamp"
@@ -27,6 +30,8 @@ destination_table = "HTUSZ_BI.dbo.T_FinishedTransaction"
 [OTMR_BI]
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
+expected_finish_time = "6:00"
+
 
 [OTMR_BI.T_PosUsage]
 date_col = "Date"
@@ -44,6 +49,7 @@ num_days = 10
 [IM_BI]
 linked_server = "GEI"
 source_type = "unknown"
+expected_finish_time = "4:00"
 
 [IM_BI.TRZ]
 date_col = "TRKING_TELJESITES_DATUM"

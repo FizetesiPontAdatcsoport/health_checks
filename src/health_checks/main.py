@@ -1,16 +1,20 @@
 import asyncio
 from email.message import EmailMessage
 import logging
+import sys
+import os
 from pathlib import Path
 import smtplib
 import ssl
-import time
 import aioodbc
 import pyodbc
 import polars as pl
 from datetime import date, datetime, timedelta
 import tomllib
 from typing import NamedTuple, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -25,11 +29,55 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
 logger.addHandler(stream_handler)
 
-# Email configuration from environment variables
-_SMTP_SERVER = "smtp-mail.outlook.com"
-_SMTP_PORT = 587
-_SMTP_USER = "eros.daniel@fizetesipont.hu"
-_SMTP_PASSWORD = "FreshPrinceOfPersia3@"
+
+class SMTPConfig(NamedTuple):
+    server: str
+    port: int
+    user: str
+    password: str
+
+
+def setup_smtp_config() -> SMTPConfig | list[ValueError]:
+    _server = os.getenv("SMTP_SERVER")
+    _port = os.getenv("SMTP_PORT")
+    _user = os.getenv("SMTP_USER")
+    _password = os.getenv("SMTP_PASSWORD")
+
+    errors = []
+
+    if not _server:
+        errors.append(ValueError("SMTP_SERVER variable not found in environment."))
+    elif not _port:
+        errors.append(ValueError("SMTP_PORT variable not found in environment."))
+    elif not _user:
+        errors.append(ValueError("SMTP_USER variable not found in environment."))
+    elif not _password:
+        errors.append(ValueError("SMTP_PASSWORD variable not found in environment."))
+
+    assert _server
+    assert _port
+    assert _user
+    assert _password
+
+    try:
+        _port = int(_port)
+    except ValueError:
+        errors.append(
+            ValueError(f"SMTP_PORT was not an integer. Passed value: {_port}")
+        )
+
+    if errors:
+        return errors
+
+    # Needded to please linter
+
+    config = SMTPConfig(
+        server=_server,
+        port=int(_port),
+        user=_user,
+        password=_password,
+    )
+    return config
 
 
 class TableConfig(NamedTuple):
@@ -263,35 +311,6 @@ async def merge_results(pool: aioodbc.Pool) -> None:
             await conn.commit()
 
 
-async def rerun_failed_checks(
-    pool: aioodbc.Pool, config: dict[str, DatabaseConfig]
-) -> None:
-    today = datetime.now().date()
-    failed_checks_query = f"""
-    SELECT DISTINCT [Table], [Database], [MetricType], [Column]
-    FROM [dbo].[T_HealthCheckResult]
-    WHERE RunDate = '{today}' AND IsHealthy = 0
-    """
-    failed_checks = await execute_query(pool, failed_checks_query)
-
-    assert isinstance(failed_checks, pl.DataFrame)
-    tasks = []
-    for row in failed_checks.iter_rows(named=True):
-        db_config = config[row["Database"]]
-        table_config = db_config.tables[row["Table"]]
-        tasks.append(
-            perform_single_health_check(
-                pool, row["Database"], db_config, row["Table"], table_config
-            )
-        )
-
-    results = await asyncio.gather(*tasks)
-    results = [item for sublist in results for item in sublist]
-
-    await save_results_staging(pool, results)
-    await merge_results(pool)
-
-
 async def perform_health_check(
     pool: aioodbc.Pool, config: dict[str, DatabaseConfig]
 ) -> list[ResultTableRow]:
@@ -324,18 +343,20 @@ def load_config(file_path: Path) -> dict[str, DatabaseConfig]:
         }
 
 
-def send_email(subject: str, body: str, recipients: list[str]) -> None:
+def send_email(
+    subject: str, body: str, recipients: list[str], config: SMTPConfig
+) -> None:
     message = EmailMessage()
-    message["From"] = _SMTP_USER
+    message["From"] = config.user
     message["To"] = ", ".join(recipients)
     message["Subject"] = subject
 
     message.set_content(body)
 
     context = ssl.create_default_context()
-    with smtplib.SMTP(_SMTP_SERVER, _SMTP_PORT) as email_server:
+    with smtplib.SMTP(config.server, config.port) as email_server:
         email_server.starttls(context=context)
-        email_server.login(_SMTP_USER, _SMTP_PASSWORD)
+        email_server.login(config.user, config.password)
 
         email_server.send_message(message)
 
@@ -350,8 +371,17 @@ async def main() -> None:
         TRUSTED_CONNECTION=YES;
     """
 
-    start = time.time()
     pool = await aioodbc.create_pool(dsn=dsn, minsize=1, maxsize=20)
+
+    match setup_smtp_config():
+        case list() as errors:
+            for error in errors:
+                logger.error(str(error))
+
+            logger.info("Program exiting...")
+            sys.exit(1)
+        case SMTPConfig() as conf:
+            smtp_config = conf
 
     try:
         results = await perform_health_check(pool, config)
@@ -370,13 +400,9 @@ async def main() -> None:
                 "eros.daniel@fizetesipont.hu",
                 "hunyadi.valter@fizetesipont.hu",
             ]
-            send_email(subject, body, recipients)
+            send_email(subject, body, recipients, smtp_config)
     finally:
         pool.close()
-
-    end = time.time()
-    delta = end - start
-    print(f"Health check run took {delta:.2f} seconds")
 
 
 if __name__ == "__main__":

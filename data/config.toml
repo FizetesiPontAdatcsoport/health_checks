@@ -19,7 +19,7 @@ date_col = "EntryTimestamp"
 sum_col = "Amount"
 source_table = "HTUSZ.dbo.T_ITransaction"
 destination_table = "HTUSZ_BI.dbo.T_ITransaction"
-num_days = 1
+num_days = 10
 
 [HTUSZ_BI.T_FinishedTransaction]
 date_col = "DateOfCompletion"

@@ -399,7 +399,7 @@ def send_email(
 
 
 async def main() -> None:
-    config = load_config(Path(os.getcwd()).parents[1] / "data/config.toml")
+    config = load_config(Path(os.getcwd()) / "data/config.toml")
     server, database = "OFSZDWH01", "WORK"
     dsn = f"""
         DRIVER=ODBC Driver 17 for SQL Server;

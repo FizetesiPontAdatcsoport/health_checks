@@ -387,6 +387,7 @@ def send_email(
     message["From"] = config.user
     message["To"] = ", ".join(recipients)
     message["Subject"] = subject
+    message["X-Priority"] = "2"
 
     message.set_content(body)
 
@@ -433,10 +434,7 @@ async def main() -> None:
             for check in failing_checks:
                 body += f"Database: {check.Database} Table: {check.Table}, Metric: {check.MetricType} \n"
 
-            recipients = [
-                "eros.daniel@fizetesipont.hu",
-                "hunyadi.valter@fizetesipont.hu",
-            ]
+            recipients = ["adatcsoport@fizetesipont.hu"]
             send_email(subject, body, recipients, smtp_config)
     finally:
         pool.close()

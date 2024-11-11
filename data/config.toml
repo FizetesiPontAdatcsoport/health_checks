@@ -2,75 +2,84 @@
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
 expected_finish_time = "11:30"
+source_prefix = "HTUSZ.dbo."
+destination_prefix = "CMS_BI.dbo."
 
 [CMS_BI.T_KivonatTrx]
 date_col = "TrxDateTime"
 sum_col = "AmountOriginal"
-source_table = "HTUSZ.dbo.T_KivonatTrx"
-destination_table = "CMS_BI.dbo.T_KivonatTrx"
+source_table = "T_KivonatTrx"
+destination_table = "T_KivonatTrx"
 
 [HTUSZ_BI]
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
 expected_finish_time = "8:30"
+source_prefix = "HTUSZ.dbo."
+destination_prefix = "HTUSZ_BI.dbo."
+
 
 [HTUSZ_BI.T_ITransaction]
 date_col = "EntryTimestamp"
 sum_col = "Amount"
-source_table = "HTUSZ.dbo.T_ITransaction"
-destination_table = "HTUSZ_BI.dbo.T_ITransaction"
+source_table = "T_ITransaction"
+destination_table = "T_ITransaction"
 num_days = 10
 
 [HTUSZ_BI.T_FinishedTransaction]
 date_col = "DateOfCompletion"
 sum_col = "AmountOfOriginal_Tr"
-source_table = "HTUSZ.dbo.T_FinishedTransaction"
-destination_table = "HTUSZ_BI.dbo.T_FinishedTransaction"
+source_table = "T_FinishedTransaction"
+destination_table = "T_FinishedTransaction"
 
 [OTMR_BI]
 linked_server = "OFSZTMRSQL01"
 source_type = "sqlserver"
 expected_finish_time = "6:00"
+source_prefix = "OTMR.dbo"
+destination_prefix = "OTMR_BI.dbo"
 
 
 [OTMR_BI.T_PosUsage]
 date_col = "Date"
 sum_col = "SumAmount"
-source_table = "OTMR.dbo.T_PosUsage"
-destination_table = "OTMR_BI.dbo.T_PosUsage"
+source_table = "T_PosUsage"
+destination_table = "T_PosUsage"
 
 [OTMR_BI.T_PosTransLog]
 date_col = "StartTS"
 sum_col = "Amount"
-source_table = "OTMR.dbo.T_PosTransLog"
-destination_table = "OTMR_BI.dbo.T_PosTransLog"
+source_table = "T_PosTransLog"
+destination_table = "T_PosTransLog"
 num_days = 10
 
 [IM_BI]
 linked_server = "GEI"
 source_type = "unknown"
 expected_finish_time = "4:00"
+source_prefix = "RNTOFSZGEI"
+destination_prefix = "IM_BI.dbo"
 
 [IM_BI.TRZ]
 date_col = "TRKING_TELJESITES_DATUM"
 sum_col = "TRKING_EREDETI_OSSZEG"
-source_table = "RNTOFSZGEI.TRKING"
-destination_table = "IM_BI.dbo.TRZ"
+source_table = "TRKING"
+destination_table = "TRZ"
 
 [IM_BI.TRANZA]
 date_col = "TRANZA_TRDAT"
 sum_col = "TRANZA_AMT"
-source_table = "RNTOFSZGEI.TRANZA"
-destination_table = "IM_BI.dbo.TRANZA"
+source_table = "TRANZA"
+destination_table = "TRANZA"
 
 [IM_BI.ZAROLT]
 date_col = "ZAROLT_AEV"
 sum_col = "ZAROLT_OSSZEG"
-source_table = "RNTOFSZGEI.ZAROLT"
-destination_table = "IM_BI.dbo.ZAROLT"
+source_table = "ZAROLT"
+destination_table = "ZAROLT"
 
 [IM_BI.SZLEGY]
 date_col = "SZLEGY_DAT"
 sum_col = "SZLEGY_NYITO"
-source_table = "RNTOFSZGEI.SZLEGY"
-destination_table = "IM_BI.dbo.SZLEGY"
+source_table = "SZLEGY"
+destination_table = "SZLEGY"

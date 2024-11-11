@@ -93,6 +93,8 @@ class DatabaseConfig(NamedTuple):
     source_type: str
     tables: dict[str, TableConfig]
     expected_finish_time: str
+    source_prefix: str
+    destination_prefix: str
 
 
 class MonitoringResult(NamedTuple):
@@ -141,7 +143,7 @@ def generate_count_query(
             SELECT * FROM OPENQUERY([{db_config.linked_server}],
             '
             SELECT COUNT(*) AS value
-            FROM {table_config.source_table} WITH (NOLOCK)
+            FROM {db_config.source_prefix}.{table_config.source_table} WITH (NOLOCK)
             WHERE [{table_config.date_col}] >= ''{threshold_date}''
             OPTION (RECOMPILE)
             ')
@@ -152,7 +154,7 @@ def generate_count_query(
         SELECT 'Source' AS DataSource, * FROM (
             SELECT * FROM OPENQUERY([{db_config.linked_server}], '
                 SELECT COUNT(*) AS value
-                FROM {table_config.source_table}
+                FROM {db_config.source_prefix}.{table_config.source_table}
                 WHERE "{table_config.date_col}" >= ''{threshold_date}''
             ')
         ) AS SourceData
@@ -161,7 +163,7 @@ def generate_count_query(
     dest_query = f"""
     SELECT 'Destination' AS DataSource,
         COUNT(*) AS value
-    FROM {table_config.destination_table} WITH (NOLOCK)
+    FROM {db_config.destination_prefix}.{table_config.destination_table} WITH (NOLOCK)
     WHERE [{table_config.date_col}] >= '{threshold_date}'
     OPTION (RECOMPILE)
     """
@@ -181,7 +183,7 @@ def generate_sum_query(
             SELECT * FROM OPENQUERY([{db_config.linked_server}],
             '
             SELECT SUM(cast([{table_config.sum_col}] as bigint)) AS value
-            FROM {table_config.source_table}
+            FROM {db_config.source_prefix}.{table_config.source_table}
             WHERE [{table_config.date_col}] >= ''{threshold_date}''
             ')
         ) AS SourceData
@@ -191,7 +193,7 @@ def generate_sum_query(
         SELECT 'Source' AS DataSource, * FROM (
             SELECT * FROM OPENQUERY([{db_config.linked_server}], '
                 SELECT SUM(cast("{table_config.sum_col}" as bigint)) AS value
-                FROM {table_config.source_table}
+                FROM {db_config.source_prefix}.{table_config.source_table}
                 WHERE "{table_config.date_col}" >= ''{threshold_date}''
             ')
         ) AS SourceData
@@ -200,7 +202,7 @@ def generate_sum_query(
     dest_query = f"""
     SELECT 'Destination' AS DataSource,
         SUM(cast([{table_config.sum_col}] as bigint)) AS value
-    FROM {table_config.destination_table} WITH (NOLOCK)
+    FROM {db_config.destination_prefix}.{table_config.destination_table} WITH (NOLOCK)
     WHERE [{table_config.date_col}] >= '{threshold_date}'
     OPTION (RECOMPILE)
     """
@@ -371,6 +373,8 @@ def load_config(file_path: Path) -> dict[str, DatabaseConfig]:
                 linked_server=db_config.pop("linked_server"),
                 source_type=db_config.pop("source_type"),
                 expected_finish_time=db_config.pop("expected_finish_time"),
+                source_prefix=db_config.pop("source_prefix"),
+                destination_prefix=db_config.pop("destination_prefix"),
                 tables={
                     table_name: TableConfig(**table_config)
                     for table_name, table_config in db_config.items()

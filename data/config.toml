@@ -56,3 +56,21 @@ date_col = "TRKING_TELJESITES_DATUM"
 sum_col = "TRKING_EREDETI_OSSZEG"
 source_table = "RNTOFSZGEI.TRKING"
 destination_table = "IM_BI.dbo.TRZ"
+
+[IM_BI.TRANZA]
+date_col = "TRANZA_TRDAT"
+sum_col = "TRANZA_AMT"
+source_table = "RNTOFSZGEI.TRANZA"
+destination_table = "IM_BI.dbo.TRANZA"
+
+[IM_BI.ZAROLT]
+date_col = "ZAROLT_AEV"
+sum_col = "ZAROLT_OSSZEG"
+source_table = "RNTOFSZGEI.ZAROLT"
+destination_table = "IM_BI.dbo.ZAROLT"
+
+[IM_BI.SZLEGY]
+date_col = "SZLEGY_DAT"
+sum_col = "SZLEGY_NYITO"
+source_table = "RNTOFSZGEI.SZLEGY"
+destination_table = "IM_BI.dbo.SZLEGY"
